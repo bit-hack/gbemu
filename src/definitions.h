@@ -17,15 +17,26 @@ struct Noncopyable {
     ~Noncopyable() = default;
 };
 
+#ifdef _MSC_VER
+#define unused(X) ((void)(X))
+#else
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 template <typename... T> void unused(T&&... unused_vars) {}
 #pragma clang diagnostic pop
+#endif
 
+#ifdef _MSC_VER
+#define fatal_error(...) \
+    log_error("Fatal error @ %s (line %d)", __FUNCTION__, __LINE__); \
+    log_error(__VA_ARGS__); \
+    exit(1);
+#else
 #define fatal_error(...) \
     log_error("Fatal error @ %s (line %d)", __PRETTY_FUNCTION__, __LINE__); \
     log_error(__VA_ARGS__); \
     exit(1);
+#endif
 
 
 const uint GAMEBOY_WIDTH = 160;

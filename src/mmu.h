@@ -12,10 +12,18 @@ class CPU;
 class Serial;
 class Input;
 class Timer;
+class Audio;
 
 class MMU {
 public:
-    MMU(std::shared_ptr<Cartridge> inCartridge, CPU& inCPU, Video& inVideo, Input& input, Serial& serial, Timer& timer, Options& options);
+    MMU(std::shared_ptr<Cartridge> inCartridge,
+      CPU& inCPU,
+      Video& inVideo,
+      Input& input,
+      Serial& serial,
+      Timer& timer,
+      Options& options,
+      Audio& audio);
 
     u8 read(const Address& address) const;
     void write(const Address& address, u8 byte);
@@ -38,6 +46,7 @@ private:
     Serial& serial;
     Timer& timer;
     Options& options;
+    Audio& audio;
 
     std::vector<u8> memory;
 

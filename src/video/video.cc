@@ -371,9 +371,10 @@ Color Video::get_color_from_palette(GBColor color, const Palette& palette) {
         case GBColor::Color1: return palette.color1;
         case GBColor::Color2: return palette.color2;
         case GBColor::Color3: return palette.color3;
+        default:
+            fatal_error("Invalid color value");
     }
 }
-
 
 Color Video::get_real_color(u8 pixel_value) const {
     switch (pixel_value) {

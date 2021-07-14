@@ -97,14 +97,13 @@ std::string describe(CartridgeType type) {
     }
 }
 
-
 std::string get_license(u16 old_license, u16 new_license) {
     /* TODO */
-    unused(old_license, new_license);
+    unused(old_license);
+    unused(new_license);
     log_error("License not implemented");
     return "";
 }
-
 
 ROMSize get_rom_size(u8 size_code) {
     switch (size_code) {
@@ -163,7 +162,6 @@ std::string describe(ROMSize size) {
     }
 }
 
-
 RAMSize get_ram_size(u8 size_code) {
     switch (size_code) {
         case 0x00:
@@ -218,7 +216,6 @@ std::string describe(RAMSize size) {
     }
 }
 
-
 Destination get_destination(u8 destination) {
     switch (destination) {
         case 0x00:
@@ -238,6 +235,7 @@ std::string describe(Destination destination) {
         case Destination::NonJapanese:
             return "Non-Japanese";
     }
+    return "Unknown";
 }
 
 std::string get_title(std::vector<u8>& rom) {
@@ -247,5 +245,5 @@ std::string get_title(std::vector<u8>& rom) {
         name[i] = static_cast<char>(rom[header::title + i]);
     }
 
-    return std::string(name);
+    return std::string(name, TITLE_LENGTH);
 }

@@ -1,6 +1,7 @@
 #include "../../src/gameboy_prelude.h"
 #include "../cli/cli.h"
 
+#define SDL_MAIN_HANDLED
 #include <SDL.h>
 
 #include <fstream>
@@ -21,35 +22,38 @@ static CliOptions cliOptions;
 
 static bool should_exit = false;
 
-static std::unique_ptr<GbButton> get_gb_button(int keyCode) {
+static GbButton get_gb_button(int keyCode) {
     switch (keyCode) {
-        case SDLK_UP: return std::make_unique<GbButton>(GbButton::Up);
-        case SDLK_DOWN: return std::make_unique<GbButton>(GbButton::Down);
-        case SDLK_LEFT: return std::make_unique<GbButton>(GbButton::Left);
-        case SDLK_RIGHT: return std::make_unique<GbButton>(GbButton::Right);
-        case SDLK_x: return std::make_unique<GbButton>(GbButton::A);
-        case SDLK_z: return std::make_unique<GbButton>(GbButton::B);
-        case SDLK_BACKSPACE: return std::make_unique<GbButton>(GbButton::Select);
-        case SDLK_RETURN: return std::make_unique<GbButton>(GbButton::Start);
-        case SDLK_b: gameboy->debug_toggle_background(); return nullptr;
-        case SDLK_s: gameboy->debug_toggle_sprites(); return nullptr;
-        case SDLK_w: gameboy->debug_toggle_window(); return nullptr;
-        default: return nullptr;
+        case SDLK_UP:         return GbButton::Up;
+        case SDLK_DOWN:       return GbButton::Down;
+        case SDLK_LEFT:       return GbButton::Left;
+        case SDLK_RIGHT:      return GbButton::Right;
+        case SDLK_x:          return GbButton::A;
+        case SDLK_z:          return GbButton::B;
+        case SDLK_BACKSPACE:  return GbButton::Select;
+        case SDLK_RETURN:     return GbButton::Start;
+        case SDLK_b:
+            gameboy->debug_toggle_background();
+            return GbButton::None;
+        case SDLK_s:
+            gameboy->debug_toggle_sprites();
+            return GbButton::None;
+        case SDLK_w:
+            gameboy->debug_toggle_window();
+            return GbButton::None;
     }
+    return GbButton::None;
 }
 
 static uint32_t get_real_color(Color color) {
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-
+    uint8_t r, g, b;
     switch (color) {
-        case Color::White: r = g = b = 255; break;
+        case Color::White:     r = g = b = 255; break;
         case Color::LightGray: r = g = b = 170; break;
-        case Color::DarkGray: r = g = b = 85; break;
-        case Color::Black: r = g = b = 0; break;
+        case Color::DarkGray:  r = g = b = 85;  break;
+        default:
+        case Color::Black:     r = g = b = 0;   break;
     }
-
     return (r << 16) | (g << 8) | (b << 0);
 }
 
@@ -112,18 +116,26 @@ static void process_events() {
 
     while (SDL_PollEvent(&event)) {
         switch (event.type) {
-            case SDL_KEYDOWN:
-                if (event.key.repeat == true) { break; }
-                if (auto button_pressed = get_gb_button(event.key.keysym.sym); button_pressed != nullptr) {
-                    gameboy->button_pressed(*button_pressed);
+            case SDL_KEYDOWN: {
+                if (event.key.repeat == SDL_TRUE) {
+                    break;
+                }
+                auto button_pressed = get_gb_button(event.key.keysym.sym);
+                if (button_pressed != GbButton::None) {
+                    gameboy->button_pressed(button_pressed);
                 }
                 break;
-            case SDL_KEYUP:
-                if (event.key.repeat == true) { break; }
-                if (auto button_released = get_gb_button(event.key.keysym.sym); button_released != nullptr) {
-                    gameboy->button_released(*button_released);
+            }
+            case SDL_KEYUP: {
+                if (event.key.repeat == SDL_TRUE) {
+                    break;
+                }
+                auto button_released = get_gb_button(event.key.keysym.sym);
+                if (button_released != GbButton::None) {
+                    gameboy->button_released(button_released);
                 }
                 break;
+            }
             case SDL_WINDOWEVENT:
                 if (event.window.event == SDL_WINDOWEVENT_CLOSE) {
                     should_exit = true;
@@ -151,6 +163,7 @@ static void draw(const FrameBuffer& buffer) {
 
     SDL_RenderCopy(renderer, gb_screen_texture, nullptr, nullptr);
     SDL_RenderPresent(renderer);
+    SDL_Delay(1);
 }
 
 static bool is_closed() {
@@ -160,6 +173,7 @@ static bool is_closed() {
 int main(int argc, char* argv[]) {
     cliOptions = get_cli_options(argc, argv);
 
+    SDL_SetMainReady();
     SDL_Init(SDL_INIT_VIDEO);
 
     window = SDL_CreateWindow(

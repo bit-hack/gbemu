@@ -54,8 +54,10 @@ extern const char* COLOR_WARNING;
 extern const char* COLOR_ERROR;
 extern const char* COLOR_RESET;
 
+#if !defined(_MSC_VER)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+#endif
 
 #define log_trace(...) global_logger.log(LogLevel::Trace, ##__VA_ARGS__);
 #define log_debug(...) global_logger.log(LogLevel::Debug, ##__VA_ARGS__);
@@ -64,6 +66,8 @@ extern const char* COLOR_RESET;
 #define log_warn(...) global_logger.log(LogLevel::Warning, ##__VA_ARGS__);
 #define log_error(...) global_logger.log(LogLevel::Error, ##__VA_ARGS__);
 
+#if !defined(_MSC_VER)
 #pragma clang diagnostic pop
+#endif
 
 extern void log_set_level(LogLevel level);

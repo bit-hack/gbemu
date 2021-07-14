@@ -11,6 +11,7 @@ enum class GbButton {
     B,
     Select,
     Start,
+    None,
 };
 
 class Input {

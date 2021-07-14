@@ -8,6 +8,7 @@
 #include "timer.h"
 #include "options.h"
 #include "util/log.h"
+#include "audio.h"
 
 #include <memory>
 #include <functional>
@@ -46,6 +47,7 @@ private:
     Serial serial;
     MMU mmu;
     Timer timer;
+    Audio audio;
 
     Debugger debugger;
 

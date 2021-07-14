@@ -7,6 +7,7 @@ add_sources(
     register
     serial
     timer
+    audio
 )
 
 add_subdirectory(cartridge)

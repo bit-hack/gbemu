@@ -7,16 +7,25 @@
 #include "util/bitwise.h"
 #include "cpu/cpu.h"
 #include "video/video.h"
+#include "audio.h"
 
-MMU::MMU(std::shared_ptr<Cartridge> inCartridge, CPU& inCPU, Video& inVideo, Input& inInput, Serial& inSerial, Timer& inTimer, Options& inOptions) :
+
+MMU::MMU(std::shared_ptr<Cartridge> inCartridge,
+         CPU& inCPU,
+         Video& inVideo,
+         Input& inInput,
+         Serial& inSerial,
+         Timer& inTimer,
+         Options& inOptions,
+         Audio& inAudio) :
     cartridge(inCartridge),
     cpu(inCPU),
     video(inVideo),
     input(inInput),
     serial(inSerial),
     timer(inTimer),
-    options(inOptions)
-{
+    options(inOptions),
+    audio(inAudio) {
     memory = std::vector<u8>(0x10000);
 }
 
@@ -82,6 +91,12 @@ u8 MMU::memory_read(const Address& address) const {
 }
 
 u8 MMU::read_io(const Address& address) const {
+
+    /* Read from PSG */
+    if (address.in_range(0xFF10, 0xFF3F)) {
+        return audio.read(address);
+    }
+
     switch (address.value()) {
         case 0xFF00:
             return input.get_input();
@@ -107,69 +122,6 @@ u8 MMU::read_io(const Address& address) const {
 
         case 0xFF0F:
             return cpu.interrupt_flag.value();
-
-        /* TODO: Audio - Channel 1: Tone & Sweep */
-        case 0xFF10:
-        case 0xFF11:
-        case 0xFF12:
-        case 0xFF13:
-        case 0xFF14:
-            return 0xFF;
-
-        /* TODO: Audio - Channel 2: Tone */
-        case 0xFF16:
-        case 0xFF17:
-        case 0xFF18:
-        case 0xFF19:
-            return 0xFF;
-
-        /* TODO: Audio - Channel 3: Wave Output */
-        case 0xFF1A:
-        case 0xFF1B:
-        case 0xFF1C:
-        case 0xFF1D:
-        case 0xFF1E:
-            return 0xFF;
-
-        /* TODO: Audio - Channel 4: Noise */
-        case 0xFF20:
-        case 0xFF21:
-        case 0xFF22:
-        case 0xFF23:
-            return 0xFF;
-
-        /* TODO: Audio - Sound Control Registers */
-        case 0xFF24:
-            /* TODO */
-            /* log_unimplemented("Read from channel control address 0x%x", address.value()); */
-            return 0xFF;
-
-        case 0xFF25:
-            /* TODO */
-            return 0xFF;
-
-        case 0xFF26:
-            /* TODO */
-            return 0xFF;
-
-        /* TODO: Audio - Wave Pattern RAM */
-        case 0xFF30:
-        case 0xFF31:
-        case 0xFF32:
-        case 0xFF33:
-        case 0xFF34:
-        case 0xFF35:
-        case 0xFF36:
-        case 0xFF37:
-        case 0xFF38:
-        case 0xFF39:
-        case 0xFF3A:
-        case 0xFF3B:
-        case 0xFF3C:
-        case 0xFF3D:
-        case 0xFF3E:
-        case 0xFF3F:
-            return memory_read(address);
 
         case 0xFF40:
             return video.control_byte;
@@ -282,6 +234,13 @@ void MMU::write(const Address& address, const u8 byte) {
 }
 
 void MMU::write_io(const Address& address, const u8 byte) {
+
+    /* Write to PSG */
+    if (address.in_range(0xFF10, 0xFF3F)) {
+        audio.write(address, byte);
+        return;
+    }
+
     switch (address.value()) {
         case 0xFF00:
             input.write(byte);
@@ -316,72 +275,6 @@ void MMU::write_io(const Address& address, const u8 byte) {
 
         case 0xFF0F:
             cpu.interrupt_flag.set(byte);
-            return;
-
-        /* TODO: Audio - Channel 1: Tone & Sweep */
-        case 0xFF10:
-        case 0xFF11:
-        case 0xFF12:
-        case 0xFF13:
-        case 0xFF14:
-            return;
-
-        /* TODO: Audio - Channel 2: Tone */
-        case 0xFF16:
-        case 0xFF17:
-        case 0xFF18:
-        case 0xFF19:
-            return;
-
-        /* TODO: Audio - Channel 3: Wave Output */
-        case 0xFF1A:
-        case 0xFF1B:
-        case 0xFF1C:
-        case 0xFF1D:
-        case 0xFF1E:
-            return;
-
-        /* TODO: Audio - Channel 4: Noise */
-        case 0xFF20:
-        case 0xFF21:
-        case 0xFF22:
-        case 0xFF23:
-            return;
-
-        /* TODO: Audio - Sound Control Registers */
-        case 0xFF24:
-            /* TODO */
-            /* log_unimplemented("Wrote to channel control address 0x%x - 0x%x", address.value(), byte); */
-            return;
-
-        case 0xFF25:
-            /* TODO */
-            /* log_unimplemented("Wrote to selection of sound output terminal address 0x%x - 0x%x", address.value(), byte); */
-            return;
-
-        case 0xFF26:
-            /* TODO */
-            log_unimplemented("Wrote to sound on/off address 0x%x - 0x%x", address.value(), byte);
-            return;
-
-        /* TODO: Audio - Wave Pattern RAM */
-        case 0xFF30:
-        case 0xFF31:
-        case 0xFF32:
-        case 0xFF33:
-        case 0xFF34:
-        case 0xFF35:
-        case 0xFF36:
-        case 0xFF37:
-        case 0xFF38:
-        case 0xFF39:
-        case 0xFF3A:
-        case 0xFF3B:
-        case 0xFF3C:
-        case 0xFF3D:
-        case 0xFF3E:
-        case 0xFF3F:
-            memory_write(address, byte);
             return;
 
         /* Switch on LCD */
